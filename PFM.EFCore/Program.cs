@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace PFM.EFCore
 {
@@ -6,42 +8,60 @@ namespace PFM.EFCore
     {
         static void Main(string[] args)
         {
-            try
+            Random rd = new Random();
+
+            using (var db = new PFMContext())
             {
-                using (var db = new PFMContext())
+                db.Database.EnsureCreated();
+            }
+
+            using (var db = new PFMContext())
+            {
+                var categories = new Category[]
                 {
-                    Category salary = new Category
+                    new Category
                     {
                         Title = "Salary",
                         Kind = Category.KindOfTurnover.Incoming
-                    };
-
-                    Category fuel = new Category
+                    },
+                    new Category
                     {
                         Title = "Fuel",
                         Kind = Category.KindOfTurnover.Outgoing
-                    };
-
-                    Wallet wallet1 = new Wallet
+                    },
+                    new Category
                     {
-                        Amount = 1000,
-                        Category = fuel,
-                        Kind = fuel.Kind,
-                        Date = DateTime.UtcNow,
-                        DateCreated = DateTime.UtcNow                        
-                    };
+                        Title = "Entertainment",
+                        Kind = Category.KindOfTurnover.Outgoing
+                    },
+                    new Category
+                    {
+                        Title = "Food",
+                        Kind = Category.KindOfTurnover.Outgoing
+                    }
+                };
 
-                    db.Categories.Add(salary);
-                    db.Categories.Add(fuel);
-                    db.Wallets.Add(wallet1);
+                db.Categories.AddRange(categories);
+
+                db.SaveChanges();
+
+                for (int i = 0; i < 5; i++)
+                {
+                    for (int j = 0; i < 1000; i++)
+                    {
+                        var category = categories[rd.Next(0, categories.Length - 1)];
+                        db.Wallets.Add(new Wallet
+                        {
+                            Amount = rd.Next(5,200) * 100,
+                            Category = category,
+                            Kind = category.Kind,
+                            Date = DateTime.UtcNow,
+                            DateCreated = DateTime.UtcNow
+                        });
+                    }
                     db.SaveChanges();
                 }
-                
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception.Message);
-                throw;
+                db.SaveChanges();
             }
         }
     }
